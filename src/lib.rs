@@ -22,14 +22,18 @@ impl Default for WindowSettings {
         }
     }
 }
-
+pub enum UpdateResult<ScreenEnumType> {
+    NoChange,
+    Change(ScreenEnumType),
+    ExitGame,
+}
 pub trait ScreenEnum<GameConstants, ScreenEnumType>: Default {
     fn init(&mut self, constants: &GameConstants) -> u8;
     fn update(
         &mut self,
         constants: &mut GameConstants,
         delta_time_ms: i32,
-    ) -> Option<ScreenEnumType>;
+    ) -> UpdateResult<ScreenEnumType>;
     fn draw(&self, window: &mut RenderWindow) -> u8;
     fn background_color(&self) -> Color;
 }
@@ -72,10 +76,14 @@ where
         self.window.clear(cur_screen.background_color());
         cur_screen.draw(&mut self.window);
         self.window.display();
-        if let Some(x) = change_screen {
-            self.is_loading = true;
-            self.running_screen = x;
-            _ = self.screen_loader();
+        match change_screen {
+            UpdateResult::ExitGame => self.exit(),
+            UpdateResult::NoChange => (),
+            UpdateResult::Change(x) => {
+                self.is_loading = true;
+                self.running_screen = x;
+                _ = self.screen_loader();
+            }
         }
     }
     pub fn run_game(&mut self) {
