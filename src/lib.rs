@@ -32,6 +32,7 @@ pub trait ScreenEnum<GameConstants, ScreenEnumType>: Default {
     fn update(
         &mut self,
         constants: &mut GameConstants,
+        event_list: &Vec<Event>,
         delta_time_ms: i32,
     ) -> UpdateResult<ScreenEnumType>;
     fn draw(&self, window: &mut RenderWindow) -> u8;
@@ -62,17 +63,19 @@ where
         self.window.close();
     }
     fn run_frame(&mut self) {
+        let mut event_list: Vec<Event> = vec![];
         while let Some(event) = self.window.poll_event() {
             if event == Event::Closed {
                 self.exit();
             }
+            event_list.push(event);
         }
         let delta_time_ms = self.clock.restart().as_milliseconds();
         let cur_screen = match self.is_loading {
             true => &mut self.load_screen,
             false => &mut self.running_screen,
         };
-        let change_screen = cur_screen.update(&mut self.settings, delta_time_ms);
+        let change_screen = cur_screen.update(&mut self.settings, &event_list, delta_time_ms);
         self.window.clear(cur_screen.background_color());
         cur_screen.draw(&mut self.window);
         self.window.display();
