@@ -63,6 +63,7 @@ where
         self.window.close();
     }
     fn run_frame(&mut self) {
+        let delta_time_ms = self.clock.restart().as_milliseconds();
         let mut event_list: Vec<Event> = vec![];
         while let Some(event) = self.window.poll_event() {
             if event == Event::Closed {
@@ -70,7 +71,6 @@ where
             }
             event_list.push(event);
         }
-        let delta_time_ms = self.clock.restart().as_milliseconds();
         let cur_screen = match self.is_loading {
             true => &mut self.load_screen,
             false => &mut self.running_screen,
@@ -101,6 +101,7 @@ pub fn create_sfml_game_object<GameConstants, ScreenEnumType>(
     settings: GameConstants,
     running_screen: ScreenEnumType,
     load_screen: ScreenEnumType,
+    frame_per_second: u32
 ) -> CoreSfmlGameEnum<GameConstants, ScreenEnumType>
 where
     ScreenEnumType: ScreenEnum<GameConstants, ScreenEnumType>,
@@ -109,16 +110,17 @@ where
     running_screen.init(&settings);
     let mut load_screen = load_screen;
     load_screen.init(&settings);
-
+    let mut window = RenderWindow::new(
+        VideoMode::new(window_settings.size.0, window_settings.size.1, 32),
+        &window_settings.title,
+        window_settings.style,
+        &window_settings.context_settings,
+    );
+    window.set_framerate_limit(frame_per_second);
     CoreSfmlGameEnum {
         clock: Clock::start(),
         is_loading: false,
-        window: RenderWindow::new(
-            VideoMode::new(window_settings.size.0, window_settings.size.1, 32),
-            &window_settings.title,
-            window_settings.style,
-            &window_settings.context_settings,
-        ),
+        window,
         running_screen,
         load_screen,
         settings,
